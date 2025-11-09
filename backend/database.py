@@ -3,8 +3,12 @@ from datetime import datetime
 from sqlalchemy import create_engine, Column, Integer, String, DateTime, Text
 from sqlalchemy.orm import sessionmaker, declarative_base
 from dotenv import load_dotenv
+from pathlib import Path
 
-load_dotenv()
+# Always load .env from the backend folder
+env_path = Path(__file__).resolve().parent / ".env"
+load_dotenv(env_path)
+
 
 DATABASE_URL = os.getenv("DATABASE_URL")
 if not DATABASE_URL:

@@ -5,20 +5,10 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from typing import List
 
-try:
-    # Prefer package-relative imports when the module is loaded as part of the
-    # `backend` package (recommended: run from project root with
-    # `uvicorn backend.main:app`).
-    from .database import SessionLocal, init_db, Quiz
-    from .scraper import scrape_wikipedia
-    from .llm_quiz_generator import generate_quiz_payload
-except Exception:
-    # Fallback to top-level imports so the module can also be executed when
-    # CWD is the `backend/` directory and the module is imported as a
-    # top-level module (e.g. `uvicorn main:app` from inside `backend`).
-    from database import SessionLocal, init_db, Quiz
-    from scraper import scrape_wikipedia
-    from llm_quiz_generator import generate_quiz_payload
+from backend.database import SessionLocal, init_db, Quiz
+from backend.scraper import scrape_wikipedia
+from backend.llm_quiz_generator import generate_quiz_payload
+
 
 app = FastAPI(title="AI Wiki Quiz Generator", version="1.0")
 
