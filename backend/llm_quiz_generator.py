@@ -6,7 +6,7 @@ from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.output_parsers import JsonOutputParser
 from langchain_google_genai import ChatGoogleGenerativeAI
 
-from backend.models import QuizOutput
+from models import QuizOutput
 
 load_dotenv()
 
