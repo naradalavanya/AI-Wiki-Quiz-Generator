@@ -39,12 +39,18 @@ class HistoryItem(BaseModel):
 @app.post("/generate_quiz")
 def generate_quiz(req: GenerateQuizRequest):
     try:
-        title, cleaned_text = scrape_wikipedia(req.url)
+        title, summary, sections, key_entities, cleaned_text = scrape_wikipedia(req.url)
     except Exception as e:
         raise HTTPException(status_code=400, detail=f"Scrape failed: {e}")
 
     try:
-        quiz_dict = generate_quiz_payload(title=title, article_text=cleaned_text)
+        quiz_dict = generate_quiz_payload(
+            title=title,
+            summary=summary,
+            sections=sections,
+            key_entities=key_entities,
+            article_text=cleaned_text,
+        )
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"LLM generation failed: {e}")
 
@@ -52,7 +58,7 @@ def generate_quiz(req: GenerateQuizRequest):
     try:
         record = Quiz(
             url=req.url,
-            title=quiz_dict.get("title", title) or title,
+            title=title,
             scraped_content=cleaned_text,
             full_quiz_data=json.dumps(quiz_dict, ensure_ascii=False),
         )
@@ -64,20 +70,42 @@ def generate_quiz(req: GenerateQuizRequest):
 
     return quiz_dict
 
-@app.get("/history", response_model=List[HistoryItem])
+@app.get("/history")
 def history():
+    """Return history items including the saved quiz payload for each record.
+
+    Each item will include: id, url, title, summary, key_entities (dict),
+    sections (list), quiz (list of questions) and related_topics.
+    """
     session = SessionLocal()
     try:
         rows = session.query(Quiz).order_by(Quiz.date_generated.desc()).all()
-        return [
-            HistoryItem(
-                id=r.id,
-                url=r.url,
-                title=r.title,
-                date_generated=r.date_generated.isoformat(),
-            )
-            for r in rows
-        ]
+        result = []
+        for r in rows:
+            try:
+                payload = json.loads(r.full_quiz_data)
+            except Exception:
+                payload = {}
+
+            # Normalize fields, prefer values from payload when available
+            summary = payload.get("summary") or payload.get("summary_text") or ""
+            key_entities = payload.get("key_entities") or payload.get("keyEntities") or {}
+            sections = payload.get("sections") or []
+            quiz_list = payload.get("quiz") or payload.get("questions") or []
+            related = payload.get("related_topics") or payload.get("relatedTopics") or payload.get("related") or []
+
+            result.append({
+                "id": r.id,
+                "url": r.url,
+                "title": payload.get("title", r.title),
+                "summary": summary,
+                "key_entities": key_entities,
+                "sections": sections,
+                "quiz": quiz_list,
+                "related_topics": related,
+            })
+
+        return result
     finally:
         session.close()
 

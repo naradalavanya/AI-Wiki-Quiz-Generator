@@ -19,7 +19,13 @@ export default function GenerateQuizTab() {
     setLoading(true);
     try {
       const result = await generateQuiz(url);
-      setData(result);
+      console.debug("generateQuiz result:", result);
+      if (!result || !Array.isArray(result.questions) || result.questions.length === 0) {
+        setError("Server returned no questions. Check backend logs or try a different article.");
+        setData(null);
+      } else {
+        setData(result);
+      }
     } catch (err) {
       setError(err.message || "Failed to generate quiz.");
     } finally {
@@ -56,7 +62,7 @@ export default function GenerateQuizTab() {
         </div>
       )}
 
-      {data && <QuizDisplay data={data} />}
+      {data && <QuizDisplay quiz={data} />}
     </div>
   );
 }
