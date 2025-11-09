@@ -6,7 +6,7 @@ from pydantic import BaseModel
 from typing import List
 
 from database import SessionLocal, init_db, Quiz
-from backend.scraper import scrape_wikipedia
+from scraper import scrape_wikipedia
 from llm_quiz_generator import generate_quiz_payload
 
 
