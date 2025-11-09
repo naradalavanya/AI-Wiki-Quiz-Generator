@@ -5,9 +5,9 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from typing import List
 
-from backend.database import SessionLocal, init_db, Quiz
+from database import SessionLocal, init_db, Quiz
 from backend.scraper import scrape_wikipedia
-from backend.llm_quiz_generator import generate_quiz_payload
+from llm_quiz_generator import generate_quiz_payload
 
 
 app = FastAPI(title="AI Wiki Quiz Generator", version="1.0")
