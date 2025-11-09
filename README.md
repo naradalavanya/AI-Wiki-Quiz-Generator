@@ -38,18 +38,12 @@ Edit `backend/.env` and set the required values:
 
 ```
 GEMINI_API_KEY=your_api_key_here
-DATABASE_URL=postgresql+psycopg2://quiz_user:QuizUser123@localhost:5432/ai_quiz_db
+DATABASE_URL=database_URL
 MODEL_NAME=gemini-1.5-flash
 CORS_ORIGINS=http://localhost:5173
 ```
 
-### 4) Initialize DB (creates tables)
-
-```powershell
-python -c "from database import init_db; init_db()"
-```
-
-### 5) Start backend (development)
+### 4) Start backend (development)
 
 Run from the repository root (recommended):
 
@@ -59,10 +53,10 @@ uvicorn backend.main:app --reload
 
 > Note: running `uvicorn main:app` from inside `backend/` can cause relative import errors. Use the repo-root command above.
 
-### 6) Frontend: install & run
+### 5) Frontend: install & run
 
 ```powershell
-cd C:\Users\HP\Downloads\ai-quiz-generator-full\frontend
+cd frontend
 npm install
 npm run dev
 ```
@@ -107,12 +101,7 @@ Base URL: http://127.0.0.1:8000 (when running locally)
 
 ---
 
-## Frontend behavior and debugging
 
-- The frontend attempts to normalize incoming quiz payloads (handles `quiz` vs `questions`, `key_entities` as dict vs list).
-- If the UI shows "No quiz returned from the server", open DevTools → Network and inspect the `/generate_quiz` response body and console logs.
-
----
 
 ## Example curl commands
 
@@ -136,51 +125,8 @@ curl 'http://127.0.0.1:8000/quiz/1'
 
 ---
 
-## Troubleshooting
 
-- Import errors when running uvicorn from inside `backend/`:
-  - Run `uvicorn backend.main:app --reload` from repo root to ensure package-relative imports work.
 
-- `ModuleNotFoundError: No module named 'fastapi'`:
-  - Activate the backend venv and install requirements: `python -m pip install -r requirements.txt`.
 
-- LLM model errors (404 / model not found):
-  - Ensure `MODEL_NAME` in `backend/.env` is valid for your account and the API version. Check your provider console or call ListModels.
-
-- Empty or invalid quiz JSON:
-  - The backend tries to parse the LLM output and store it. If the parser fails or the LLM returns unexpected JSON, check backend logs (uvicorn) for the error and paste the raw output here for help.
-
----
-
-## Development tips
-
-- To temporarily log raw LLM responses, add a `print()` or use the logging module in `backend/llm_quiz_generator.py` around the `chain.invoke(...)` call.
-- To change the model quickly for testing, edit `backend/.env` `MODEL_NAME` and restart uvicorn.
-
----
-
-If you want, I can add a small Postman collection or automated smoke-tests. Tell me how you'd like the README adjusted (shorter, more beginner-friendly, or include screenshots) and I'll update it.
-# AI Wiki Quiz Generator
-
-Python **FastAPI** backend + **LangChain + Gemini** + **BeautifulSoup** + **SQLAlchemy (PostgreSQL)** and **React + Tailwind** frontend.
-
-## Run
-
-### Backend (Windows-friendly)
-```powershell
-cd backend
-python -m venv venv
-.\venv\Scripts\activate
-pip install -r requirements.txt
-# Edit .env (GEMINI_API_KEY & DATABASE_URL)
-uvicorn main:app --reload 
-```
-
-### Frontend
-```powershell
-cd frontend
-npm install
-npm run dev
-```
 
 Deployment Link: https://aiwikiquizgenerator22.netlify.app/
