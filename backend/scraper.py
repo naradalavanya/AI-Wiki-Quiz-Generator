@@ -2,19 +2,11 @@ import re
 import requests
 from bs4 import BeautifulSoup
 from typing import Tuple, List, Dict
-import spacy
-
-# Load spaCy small NER model once
-try:
-    nlp = spacy.load("en_core_web_sm")
-except:
-    # if not installed, users will install:
-    # python -m spacy download en_core_web_sm
-    nlp = None
 
 HEADERS = {
-    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120 Safari/537.36"
+    "User-Agent": "Mozilla/5.0"
 }
+
 WIKI_MAIN_SELECTOR = "#mw-content-text"
 
 
@@ -27,7 +19,7 @@ def _clean_text(text: str) -> str:
 def _extract_summary(paragraphs: List[str]) -> str:
     summary = []
     for p in paragraphs:
-        if len(summary) >= 3:  # take first 3 meaningful paragraphs
+        if len(summary) >= 3:
             break
         if len(p.split()) > 20:
             summary.append(p)
@@ -44,22 +36,17 @@ def _extract_sections(soup: BeautifulSoup) -> List[str]:
 
 
 def _extract_entities(text: str) -> Dict[str, List[str]]:
-    if not nlp:  # If spaCy isn't installed
-        return {"people": [], "organizations": [], "locations": []}
-
-    doc = nlp(text)
-    people = sorted({ent.text for ent in doc.ents if ent.label_ == "PERSON"})
-    orgs = sorted({ent.text for ent in doc.ents if ent.label_ == "ORG"})
-    locs = sorted({ent.text for ent in doc.ents if ent.label_ in ["GPE", "LOC"]})
-
+    words = set(text.split())
+    # Very lightweight fake NER - just return capitalized keywords
+    candidates = [w.strip(",.") for w in words if w.istitle() and len(w) > 3]
     return {
-        "people": people[:15],
-        "organizations": orgs[:15],
-        "locations": locs[:15],
+        "people": candidates[:10],
+        "organizations": [],
+        "locations": []
     }
 
 
-def scrape_wikipedia(url: str) -> Tuple[str, str, List[str], Dict[str, List[str]], str]:
+def scrape_wikipedia(url: str):
     """
     Returns:
       title,
@@ -68,7 +55,7 @@ def scrape_wikipedia(url: str) -> Tuple[str, str, List[str], Dict[str, List[str]
       key_entities,
       full_cleaned_text
     """
-    if not (url.startswith("http://") or url.startswith("https://")):
+    if not url.startswith(("http://", "https://")):
         raise ValueError("URL must start with http:// or https://")
 
     resp = requests.get(url, headers=HEADERS, timeout=30)
@@ -76,7 +63,6 @@ def scrape_wikipedia(url: str) -> Tuple[str, str, List[str], Dict[str, List[str]
 
     soup = BeautifulSoup(resp.text, "html.parser")
 
-    # Title
     title_tag = soup.find("h1", id="firstHeading")
     title = title_tag.get_text(strip=True) if title_tag else soup.title.get_text(strip=True)
 
@@ -84,7 +70,6 @@ def scrape_wikipedia(url: str) -> Tuple[str, str, List[str], Dict[str, List[str]
     if not content_root:
         raise RuntimeError("Could not locate Wikipedia main content")
 
-    # Remove unnecessary tags
     for selector in ["table", ".infobox", ".navbox", ".vertical-navbox", ".toc", ".reflist"]:
         for tag in content_root.select(selector):
             tag.decompose()
