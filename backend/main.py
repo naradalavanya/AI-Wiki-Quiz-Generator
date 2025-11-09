@@ -94,6 +94,14 @@ def history():
             quiz_list = payload.get("quiz") or payload.get("questions") or []
             related = payload.get("related_topics") or payload.get("relatedTopics") or payload.get("related") or []
 
+            # compute epoch ms for easier client-side rendering
+            date_ms = None
+            if getattr(r, "date_generated", None) is not None:
+                try:
+                    date_ms = int(r.date_generated.timestamp() * 1000)
+                except Exception:
+                    date_ms = None
+
             result.append({
                 "id": r.id,
                 "url": r.url,
@@ -103,6 +111,9 @@ def history():
                 "sections": sections,
                 "quiz": quiz_list,
                 "related_topics": related,
+                # include timestamp so frontend can show when the quiz was generated
+                "date_generated": (r.date_generated.isoformat() if getattr(r, 'date_generated', None) is not None else None),
+                "date_generated_ms": date_ms,
             })
 
         return result

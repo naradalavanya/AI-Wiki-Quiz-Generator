@@ -1,4 +1,13 @@
-const BASE_URL = "https://ai-wiki-quiz-generator-j8j0.onrender.com";
+// Prefer local backend when running the frontend on localhost, otherwise use the
+// deployed backend. This makes local dev work without editing this file.
+const DEFAULT_REMOTE = "https://ai-wiki-quiz-generator-j8j0.onrender.com";
+let BASE_URL = DEFAULT_REMOTE;
+if (typeof window !== "undefined") {
+  const host = window.location.hostname;
+  if (host === "localhost" || host === "127.0.0.1") {
+    BASE_URL = "http://127.0.0.1:8000"; // local backend default
+  }
+}
 
 function normalizeQuizData(raw) {
   if (!raw) return raw;
@@ -65,7 +74,19 @@ export async function generateQuiz(url) {
 export async function fetchHistory() {
   const resp = await fetch(`${BASE_URL}/history`);
   if (!resp.ok) throw new Error("Failed to load history");
-  return resp.json();
+  const raw = await resp.json();
+
+  // Normalize history items: ensure `date_generated` is an ISO string when
+  // possible. Backend may provide `date_generated` (ISO) or
+  // `date_generated_ms` (epoch ms). Prefer ISO, then ms.
+  if (!Array.isArray(raw)) return [];
+  return raw.map((item) => {
+    const iso = item.date_generated || (item.date_generated_ms ? new Date(item.date_generated_ms).toISOString() : null);
+    return {
+      ...item,
+      date_generated: iso,
+    };
+  });
 }
 
 export async function fetchQuizById(id) {
