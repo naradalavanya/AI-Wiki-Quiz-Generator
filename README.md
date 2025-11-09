@@ -21,4 +21,4 @@ npm install
 npm run dev
 ```
 
-
+Deployment Link: https://aiwikiquizgenerator22.netlify.app/
